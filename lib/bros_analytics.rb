@@ -8,14 +8,23 @@ client = Elasticsearch::Client.new(
   password: ENV["ELASTIC_PASSWORD"]
 )
 
-count = 0
+id = 0
+messages = []
 
 puts "Opening #{ENV["FACEBOOK_MESSAGES"]}"
 html = Nokogiri::HTML(open(ENV["FACEBOOK_MESSAGES"]))
 
 html.css('.message').each do |msg|
+  id += 1
   message = Message.new(msg)
-  count += 1
-  puts message.to_json
-  client.index  index: 'messages', type: 'message', id: count, body: message.to_json
+  messages << { index: { _index: 'messages', _type: 'message', _id: id, data: message.to_map } }
+
+  # Batch up to send
+  if messages.count == 1000
+    client.bulk body: messages
+    messages = []
+  end
 end
+
+# Send the final batch
+client.bulk body: messages

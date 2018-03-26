@@ -22,8 +22,13 @@ class Message
   end
 
 
+  def to_map
+    return { author: @author, timestamp: @timestamp.to_i, text: @text, image: @image }
+  end
+
+
   def to_json
-    return { author: @author, timestamp: @timestamp.to_i, text: @text, image: @image }.to_json
+    return self.to_map.to_json
   end
 
 
